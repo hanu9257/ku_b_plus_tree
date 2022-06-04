@@ -1,3 +1,7 @@
 *.DSYM
 *.o
 *.pdf
+.vscode
+btree
+page
+Makefile
