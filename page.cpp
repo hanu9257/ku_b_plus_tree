@@ -68,12 +68,12 @@ uint64_t page::find(char *key)
 	void *data_region = nullptr;
 
 	/* linear search for stored key == key */
-	for (int i = 0; i < num_data; i++)
+	for (int i = num_data - 1; i >= 0; i--)
 	{
 		off = *(uint16_t *)((uint64_t)offset_array + i * 2);
 		data_region = (void *)((uint64_t)this + (uint64_t)off);
 		stored_key = get_key(data_region);
-		if (strcmp(key, (char *)stored_key) == 0)
+		if (strcmp(key, (char *)stored_key) >= 0)
 		{
 			val = get_val((void *)stored_key);
 			break;
@@ -173,6 +173,7 @@ page *page::split(char *key, uint64_t val, char **parent_key)
 		if (i == num_data / 2)
 		{
 			middle_key = get_key(data_region);
+			*parent_key = get_key(data_region);
 		}
 		stored_val = get_val((void *)stored_key);
 		new_page->insert((char *)stored_key, stored_val);
@@ -184,7 +185,7 @@ page *page::split(char *key, uint64_t val, char **parent_key)
 	}
 	else /* Inserted key is larger than middle key. */
 	{
-		new_page->insert(key, val);
+		new_page->insert(key, val); /* g is inserted to new page */
 	}
 	this->defrag();
 	return new_page;
