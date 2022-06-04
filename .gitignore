@@ -1,3 +1,6 @@
 *.DSYM
 *.o
 *.pdf
+btree
+page
+Makefile
