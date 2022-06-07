@@ -26,10 +26,6 @@ void btree::insert(char *key, uint64_t val)
 		stack[path_count] = current_page;
 		path_count++;
 		page *next_page = (page *)current_page->find(key);
-		if (next_page == nullptr)
-		{
-			next_page = current_page->get_leftmost_ptr();
-		}
 		current_page = next_page;
 	}
 	strcpy(input_key, key);

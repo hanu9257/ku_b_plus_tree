@@ -79,6 +79,10 @@ uint64_t page::find(char *key)
 			break;
 		}
 	}
+	if(val == 0)
+	{
+		val = (uint64_t)leftmost_ptr;
+	}
 	return val;
 }
 
