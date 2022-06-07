@@ -12,10 +12,10 @@ void btree::insert(char *key, uint64_t val)
 {
 	// Please implement this function in project 2.
 	page *current_page = root;
-	page *stack[height]; // TODO split 발생 시 스택 사용해서 삽입을 위해 지나왔던 부모 page에 key 삽입해줘야함. 
+	page *stack[height]; // TODO split 발생 시 스택 사용해서 삽입을 위해 지나왔던 부모 page에 key 삽입해줘야함.
 	page *new_page = nullptr;
-	char *medium_key;
-	char *input_key;
+	char *medium_key = (char *)malloc(20);
+	char input_key[20];
 	uint64_t input_value;
 	int path_count = 1;
 
@@ -26,18 +26,21 @@ void btree::insert(char *key, uint64_t val)
 		stack[path_count] = current_page;
 		path_count++;
 		page *next_page = (page *)current_page->find(key);
-		if(next_page == nullptr)
+		if (next_page == nullptr)
 		{
 			next_page = current_page->get_leftmost_ptr();
 		}
 		current_page = next_page;
 	}
-
-	while(path_count != 0)
+	strcpy(input_key, key);
+	input_value = val;
+	while (path_count != 0)
 	{
-		if (current_page->insert(key, val) == false) /* leaf */
+		if (current_page->insert(input_key, input_value) == false) /* leaf */
 		{
-			new_page = current_page->split(key, val, &medium_key);
+			new_page = current_page->split(input_key, input_value, &medium_key); /* after split */ // ! When inserting 'm' value is wrong
+			strcpy(input_key, medium_key);
+			input_value = (uint64_t)new_page;
 			if (current_page == root)
 			{
 				page *new_root = new page(INTERNAL);
@@ -45,16 +48,15 @@ void btree::insert(char *key, uint64_t val)
 				new_root->insert(medium_key, (uint64_t)new_page);
 				root = new_root;
 				height++;
+				break;
 			}
 		}
-
-		if(new_page != nullptr) /* after split */
+		else 
 		{
-			current_page = stack[path_count];
-			current_page->insert(medium_key, (uint64_t)new_page);
-			new_page = nullptr;
+			break;
 		}
-		path_count--;
+
+		current_page = stack[--path_count];
 	}
 }
 

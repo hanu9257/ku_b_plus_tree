@@ -160,7 +160,7 @@ page *page::split(char *key, uint64_t val, char **parent_key)
 	int num_data = hdr.get_num_data();
 	void *offset_array = hdr.get_offset_array();
 	void *stored_key = nullptr;
-	char *middle_key = nullptr;
+	char middle_key[20];
 	uint16_t off = 0;
 	uint64_t stored_val = 0;
 	void *data_region = nullptr;
@@ -170,15 +170,16 @@ page *page::split(char *key, uint64_t val, char **parent_key)
 		off = *(uint16_t *)((uint64_t)offset_array + i * 2);
 		data_region = (void *)((uint64_t)this + (uint64_t)off);
 		stored_key = get_key(data_region);
-		if (i == num_data / 2)
-		{
-			middle_key = get_key(data_region);
-			*parent_key = get_key(data_region);
-		}
 		stored_val = get_val((void *)stored_key);
 		new_page->insert((char *)stored_key, stored_val);
+		if (i == num_data / 2)
+		{
+			strcpy(middle_key, (char *)stored_key);
+			strcpy(*parent_key, (char *)stored_key);
+		}
 	}
 
+	this->defrag();
 	if (strcmp(key, middle_key) <= 0) /* Inserted key is smaller than middle key. */
 	{
 		this->insert(key, val);
@@ -187,7 +188,6 @@ page *page::split(char *key, uint64_t val, char **parent_key)
 	{
 		new_page->insert(key, val); /* g is inserted to new page */
 	}
-	this->defrag();
 	return new_page;
 }
 
