@@ -12,7 +12,7 @@ void btree::insert(char *key, uint64_t val)
 {
 	// Please implement this function in project 2.
 	page *current_page = root;
-	page *stack[height]; // TODO split 발생 시 스택 사용해서 삽입을 위해 지나왔던 부모 page에 key 삽입해줘야함.
+	page *stack[height];
 	page *new_page = nullptr;
 	char *medium_key = (char *)malloc(20);
 	char input_key[20];
@@ -34,7 +34,7 @@ void btree::insert(char *key, uint64_t val)
 	{
 		if (current_page->insert(input_key, input_value) == false) /* leaf */
 		{
-			new_page = current_page->split(input_key, input_value, &medium_key); /* after split */ // ! When inserting 'm' value is wrong
+			new_page = current_page->split(input_key, input_value, &medium_key); /* after split */
 			strcpy(input_key, medium_key);
 			input_value = (uint64_t)new_page;
 			if (current_page == root)
