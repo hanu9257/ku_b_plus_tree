@@ -70,14 +70,18 @@ uint64_t page::find(char *key)
 	/* linear search for stored key == key */
 	for (int i = num_data - 1; i >= 0; i--)
 	{
-		off = *(uint16_t *)((uint64_t)offset_array + i * 2);
-		data_region = (void *)((uint64_t)this + (uint64_t)off);
+		off = *(uint16_t *)((uint64_t)offset_array + i * 2);	//! When finding 't' off value stays at 0 -> offset array has to be in 00718 but it is in 00918
+		data_region = (void *)((uint64_t)this + (uint64_t)off); //* Is there a guarantee that 'this+off' can find the data region?
 		stored_key = get_key(data_region);
 		if (strcmp(key, (char *)stored_key) >= 0)
 		{
 			val = get_val((void *)stored_key);
 			break;
 		}
+	}
+	if (val == 0)
+	{
+		val = (uint64_t)leftmost_ptr;
 	}
 	return val;
 }
@@ -160,7 +164,7 @@ page *page::split(char *key, uint64_t val, char **parent_key)
 	int num_data = hdr.get_num_data();
 	void *offset_array = hdr.get_offset_array();
 	void *stored_key = nullptr;
-	char *middle_key = nullptr;
+	char middle_key[20];
 	uint16_t off = 0;
 	uint64_t stored_val = 0;
 	void *data_region = nullptr;
@@ -170,15 +174,16 @@ page *page::split(char *key, uint64_t val, char **parent_key)
 		off = *(uint16_t *)((uint64_t)offset_array + i * 2);
 		data_region = (void *)((uint64_t)this + (uint64_t)off);
 		stored_key = get_key(data_region);
-		if (i == num_data / 2)
-		{
-			middle_key = get_key(data_region);
-			*parent_key = get_key(data_region);
-		}
 		stored_val = get_val((void *)stored_key);
 		new_page->insert((char *)stored_key, stored_val);
+		if (i == num_data / 2)
+		{
+			strcpy(middle_key, (char *)stored_key);
+			strcpy(*parent_key, (char *)stored_key);
+		}
 	}
 
+	this->defrag();					  // On defrag offest_array value changes
 	if (strcmp(key, middle_key) <= 0) /* Inserted key is smaller than middle key. */
 	{
 		this->insert(key, val);
@@ -187,7 +192,6 @@ page *page::split(char *key, uint64_t val, char **parent_key)
 	{
 		new_page->insert(key, val); /* g is inserted to new page */
 	}
-	this->defrag();
 	return new_page;
 }
 
@@ -229,7 +233,11 @@ void page::defrag()
 	new_page->set_leftmost_ptr(get_leftmost_ptr());
 
 	memcpy(this, new_page, sizeof(page));
+	hdr.set_offset_array((void *)((uint64_t)this + sizeof(slot_header)));
 	delete new_page;
+	// * Is this the right way to do this?
+	// * When memcpy has called, offset array information is also copied. :(
+	// * but we are now deleting 'new_page'. Then where are we referencing?
 }
 
 void page::print()

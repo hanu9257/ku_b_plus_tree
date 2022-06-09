@@ -13,29 +13,52 @@ void btree::insert(char *key, uint64_t val)
 	// Please implement this function in project 2.
 	page *current_page = root;
 	page *stack[height];
-	int path_count = 0;
-	while (current_page->get_type() == INTERNAL)
+	page *new_page = nullptr;
+	char *medium_key = (char *)malloc(20);
+	char input_key[20];
+	uint64_t input_value;
+	int path_count = 1;
+
+	/* 현재 k를 insert할 때 split이 발생했음에도 부모 page의 key가 insert되지 않았음. */
+
+	while (current_page->get_type() == INTERNAL) /* traversing */
 	{
+		stack[path_count] = current_page;
+		path_count++;
 		page *next_page = (page *)current_page->find(key);
-		if(next_page == nullptr)
-		{
-			next_page = current_page->get_leftmost_ptr();
-		}
 		current_page = next_page;
 	}
-	char *medium_key;
-	page *new_page = nullptr;
-	if (current_page->insert(key, val) == false)
+	strcpy(input_key, key);
+	input_value = val;
+	while (path_count != 0)
 	{
-		new_page = current_page->split(key, val, &medium_key);
-		if (current_page == root)
+		if (current_page->insert(input_key, input_value) == false) /* leaf */
 		{
-			page *new_root = new page(INTERNAL);
-			new_root->set_leftmost_ptr(root);
-			new_root->insert(medium_key, (uint64_t)new_page);
-			root = new_root;
-			height++;
+			if (current_page == root)
+			{
+				page *new_root = new page(INTERNAL);
+				new_page = current_page->split(input_key, input_value, &medium_key);
+				strcpy(input_key, medium_key);
+				input_value = (uint64_t)new_page;
+				new_root->set_leftmost_ptr(root);
+				new_root->insert(input_key, input_value);
+				root = new_root;
+				height++;
+				break;
+			}
+			else
+			{
+				new_page = current_page->split(input_key, input_value, &medium_key);
+				strcpy(input_key, medium_key);
+				input_value = (uint64_t)new_page;
+			}
 		}
+		else
+		{
+			break;
+		}
+
+		current_page = stack[--path_count];
 	}
 }
 
