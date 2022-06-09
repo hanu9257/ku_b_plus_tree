@@ -34,20 +34,26 @@ void btree::insert(char *key, uint64_t val)
 	{
 		if (current_page->insert(input_key, input_value) == false) /* leaf */
 		{
-			new_page = current_page->split(input_key, input_value, &medium_key); /* after split */
-			strcpy(input_key, medium_key);
-			input_value = (uint64_t)new_page;
 			if (current_page == root)
 			{
 				page *new_root = new page(INTERNAL);
+				new_page = current_page->split(input_key, input_value, &medium_key);
+				strcpy(input_key, medium_key);
+				input_value = (uint64_t)new_page;
 				new_root->set_leftmost_ptr(root);
-				new_root->insert(medium_key, (uint64_t)new_page);
+				new_root->insert(input_key, input_value);
 				root = new_root;
 				height++;
 				break;
 			}
+			else
+			{
+				new_page = current_page->split(input_key, input_value, &medium_key);
+				strcpy(input_key, medium_key);
+				input_value = (uint64_t)new_page;
+			}
 		}
-		else 
+		else
 		{
 			break;
 		}
